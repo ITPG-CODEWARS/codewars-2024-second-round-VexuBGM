@@ -30,6 +30,13 @@
     .text-center {
       text-align: center;
     }
+    .truncate {
+      max-width: 300px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -70,11 +77,11 @@
       <tbody>
         <% shortURLs.forEach(shortURL => { %>
           <tr>
-            <td><a href="<%= shortURL.full %>" target="_blank"><%= shortURL.full %></a></td>
+            <td class="truncate" onclick="showFullURL('<%= shortURL.full %>')"><a href="<%= shortURL.full %>" target="_blank"><%= shortURL.full %></a></td>
             <td><a href="<%= shortURL.short %>" target="_blank"><%= shortURL.short %></a></td>
             <td><%= shortURL.clicks %></td>
             <td><img src="<%= shortURL.qrCodeURL %>" alt="QR Code" class="qr-code"></td>
-            <td><a href="/qrcode/<%= shortURL.short %>" class="btn btn-primary">Download QR Code</a></td>
+            <td><a href="<%= shortURL.qrCodeURL %>" download="qrcode.png" class="btn btn-primary">Download QR Code</a></td>
             <td><button class="btn btn-danger delete-btn" data-id="<%= shortURL._id %>">Delete</button></td>
           </tr>
         <% }) %>
@@ -113,6 +120,10 @@
         });
       }
     });
+
+    function showFullURL(url) {
+      alert(url);
+    }
   </script>
 </body>
 </html>
