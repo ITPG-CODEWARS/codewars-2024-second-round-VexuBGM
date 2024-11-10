@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const shortId = require('shortid');
 const ShortURL = require('./models/shortURL');
 const QRCode = require('qrcode');
+const cron = require('node-cron');
 const app = express();
 
 mongoose.connect('mongodb://localhost/urlShortener', {
@@ -56,7 +57,16 @@ app.post('/shortURLs', async (req, res) => {
     shortURL = shortId.generate().slice(0, urlLength);
   }
 
-  await ShortURL.create({ full: req.body.fullURL, short: shortURL });
+  const expiresAt = req.body.expiresAt ? new Date(req.body.expiresAt) : null;
+  if (expiresAt) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set the time to the start of the day
+    if (expiresAt < today) {
+      return res.status(400).send('Expiration date cannot be in the past');
+    }
+  }
+
+  await ShortURL.create({ full: req.body.fullURL, short: shortURL, expiresAt });
   res.sendStatus(200);
 });
 
@@ -84,10 +94,22 @@ app.get('/:shortURL', async (req, res) => {
   const shortURL = await ShortURL.findOne({ short: req.params.shortURL });
   if (shortURL == null) return res.sendStatus(404);
 
+  if (shortURL.expiresAt && shortURL.expiresAt < new Date()) {
+    await ShortURL.findByIdAndDelete(shortURL._id);
+    return res.status(410).send('This short URL has expired');
+  }
+
   shortURL.clicks++;
   shortURL.save();
 
   res.redirect(shortURL.full);
+});
+
+// Schedule task to run every day at midnight
+cron.schedule('0 0 * * *', async () => {
+  const now = new Date();
+  await ShortURL.deleteMany({ expiresAt: { $lt: now } });
+  console.log('Expired URLs cleaned up');
 });
 
 app.listen(process.env.PORT || 5000);

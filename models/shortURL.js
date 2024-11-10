@@ -10,12 +10,16 @@ const shortURLSchema = new mongoose.Schema({
     type: String,
     required: true,
     default: shortId.generate,
-    unique: true // Ensure short URLs are unique
+    unique: true 
   },
   clicks: {
     type: Number,
     required: true,
     default: 0
+  },
+  expiresAt: {
+    type: Date,
+    default: null // Optional expiration date
   }
 });
 

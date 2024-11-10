@@ -44,11 +44,11 @@
     <div id="warning" class="alert alert-danger d-none"></div>
     <form id="shortenForm" class="my-4">
       <div class="row g-2">
-        <div class="col-md-6">
+        <div class="col-md-4">
           <label for="fullURL" class="visually-hidden">URL</label>
           <input required placeholder="Enter the full URL" type="url" name="fullURL" id="fullURL" class="form-control">
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
           <label for="customShortURL" class="visually-hidden">Custom Short URL</label>
           <input placeholder="Custom Short URL" type="text" name="customShortURL" id="customShortURL" class="form-control">
         </div>
@@ -56,7 +56,11 @@
           <label for="urlLength" class="visually-hidden">URL Length</label>
           <input placeholder="URL Length" type="number" name="urlLength" id="urlLength" class="form-control" min="5" max="10">
         </div>
-        <div class="col-md-1">
+        <div class="col-md-2">
+          <label for="expiresAt" class="visually-hidden">Expiration Date</label>
+          <input placeholder="Expiration Date" type="date" name="expiresAt" id="expiresAt" class="form-control">
+        </div>
+        <div class="col-md-2">
           <button class="btn btn-success w-100" type="submit">Shorten</button>
         </div>
       </div>
@@ -70,6 +74,7 @@
           <th>Clicks</th>
           <th>QR Code</th>
           <th>Download</th>
+          <th>Expiration Date</th>
           <th>Action</th>
         </tr>
       </thead>
@@ -81,6 +86,7 @@
             <td><%= shortURL.clicks %></td>
             <td><img src="<%= shortURL.qrCodeURL %>" alt="QR Code" class="qr-code"></td>
             <td><a href="<%= shortURL.qrCodeURL %>" download="qrcode.png" class="btn btn-primary">Download QR Code</a></td>
+            <td><%= shortURL.expiresAt ? shortURL.expiresAt.toDateString() : 'No Expiration' %></td>
             <td><button class="btn btn-danger delete-btn" data-id="<%= shortURL._id %>">Delete</button></td>
           </tr>
         <% }) %>
