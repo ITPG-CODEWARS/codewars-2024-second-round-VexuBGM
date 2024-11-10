@@ -44,12 +44,14 @@ app.post('/shortURLs', async (req, res) => {
       return res.status(400).send('Custom short URL already exists');
     }
   } else {
-    if (!req.body.urlLength) {
-      return res.status(400).send('URL length is required if no custom short URL is provided');
-    }
-    const urlLength = parseInt(req.body.urlLength, 10);
-    if (isNaN(urlLength) || urlLength < 5 || urlLength > 10) {
-      return res.status(400).send('URL length must be between 5 and 10 characters');
+    let urlLength;
+    if (req.body.urlLength) {
+      urlLength = parseInt(req.body.urlLength, 10);
+      if (isNaN(urlLength) || urlLength < 5 || urlLength > 10) {
+        return res.status(400).send('URL length must be between 5 and 10 characters');
+      }
+    } else {
+      urlLength = Math.floor(Math.random() * 6) + 5; // Random length between 5 and 10
     }
     shortURL = shortId.generate().slice(0, urlLength);
   }

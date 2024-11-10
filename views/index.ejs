@@ -35,7 +35,6 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      cursor: pointer;
     }
   </style>
 </head>
@@ -77,7 +76,7 @@
       <tbody>
         <% shortURLs.forEach(shortURL => { %>
           <tr>
-            <td class="truncate" onclick="showFullURL('<%= shortURL.full %>')"><a href="<%= shortURL.full %>" target="_blank"><%= shortURL.full %></a></td>
+            <td class="truncate"><a href="<%= shortURL.full %>" target="_blank"><%= shortURL.full %></a></td>
             <td><a href="<%= shortURL.short %>" target="_blank"><%= shortURL.short %></a></td>
             <td><%= shortURL.clicks %></td>
             <td><img src="<%= shortURL.qrCodeURL %>" alt="QR Code" class="qr-code"></td>
@@ -120,10 +119,6 @@
         });
       }
     });
-
-    function showFullURL(url) {
-      alert(url);
-    }
   </script>
 </body>
 </html>
