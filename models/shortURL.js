@@ -20,6 +20,10 @@ const shortURLSchema = new mongoose.Schema({
   expiresAt: {
     type: Date,
     default: null // Optional expiration date
+  },
+  maxUses: {
+    type: Number,
+    default: null // Optional maximum uses
   }
 });
 

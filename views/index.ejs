@@ -61,6 +61,10 @@
           <input placeholder="Expiration Date" type="date" name="expiresAt" id="expiresAt" class="form-control">
         </div>
         <div class="col-md-2">
+          <label for="maxUses" class="visually-hidden">Max Uses</label>
+          <input placeholder="Max Uses" type="number" name="maxUses" id="maxUses" class="form-control" min="1">
+        </div>
+        <div class="col-md-2">
           <button class="btn btn-success w-100" type="submit">Shorten</button>
         </div>
       </div>
@@ -83,7 +87,12 @@
           <tr>
             <td class="truncate"><a href="<%= shortURL.full %>" target="_blank"><%= shortURL.full %></a></td>
             <td><a href="<%= shortURL.short %>" target="_blank"><%= shortURL.short %></a></td>
-            <td><%= shortURL.clicks %></td>
+            <td>
+              <%= shortURL.clicks %>
+              <% if (shortURL.maxUses !== null) { %>
+                / <%= shortURL.maxUses + shortURL.clicks %>
+              <% } %>
+            </td>
             <td><img src="<%= shortURL.qrCodeURL %>" alt="QR Code" class="qr-code"></td>
             <td><a href="<%= shortURL.qrCodeURL %>" download="qrcode.png" class="btn btn-primary">Download QR Code</a></td>
             <td><%= shortURL.expiresAt ? shortURL.expiresAt.toDateString() : 'No Expiration' %></td>

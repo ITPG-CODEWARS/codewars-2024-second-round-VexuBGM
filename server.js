@@ -66,7 +66,12 @@ app.post('/shortURLs', async (req, res) => {
     }
   }
 
-  await ShortURL.create({ full: req.body.fullURL, short: shortURL, expiresAt });
+  const maxUses = req.body.maxUses ? parseInt(req.body.maxUses, 10) : null;
+  if (maxUses !== null && (isNaN(maxUses) || maxUses < 1)) {
+    return res.status(400).send('Max uses must be a positive number');
+  }
+
+  await ShortURL.create({ full: req.body.fullURL, short: shortURL, expiresAt, maxUses });
   res.sendStatus(200);
 });
 
@@ -99,8 +104,17 @@ app.get('/:shortURL', async (req, res) => {
     return res.status(410).send('This short URL has expired');
   }
 
+  if (shortURL.maxUses !== null) {
+    if (shortURL.maxUses <= 1) {
+      const fullURL = shortURL.full;
+      await ShortURL.findByIdAndDelete(shortURL._id);
+      return res.redirect(fullURL);
+    }
+    shortURL.maxUses--;
+  }
+
   shortURL.clicks++;
-  shortURL.save();
+  await shortURL.save();
 
   res.redirect(shortURL.full);
 });
