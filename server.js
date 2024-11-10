@@ -138,7 +138,12 @@ app.get('/:shortURL', async (req, res) => {
     shortURL.maxUses--;
   }
 
-  shortURL.clicks+=0.5; // Не ме питайте защо това е най-лесният начин за оправяне , но е така и работи
+  if (shortURL.password) {
+    shortURL.clicks+=0.5; // Не ме питайте защо това е най-лесният начин за оправяне, но е така и работи
+  }
+  else {
+    shortURL.clicks++;
+  }
   await shortURL.save();
 
   res.redirect(shortURL.full);

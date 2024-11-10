@@ -107,7 +107,7 @@
             <td><img src="<%= shortURL.qrCodeURL %>" alt="QR Code" class="qr-code"></td>
             <td><a href="<%= shortURL.qrCodeURL %>" download="qrcode.png" class="btn btn-primary">Download QR Code</a></td>
             <td><%= shortURL.expiresAt ? shortURL.expiresAt.toDateString() : 'No Expiration' %></td>
-            <td><button class="btn btn-danger delete-btn" data-id="<%= shortURL._id %>">Delete</button></td>
+            <td><button class="btn btn-danger delete-btn" data-id="<%= shortURL._id %>" data-password="<%= shortURL.password %>">Delete</button></td>
           </tr>
         <% }) %>
       </tbody>
@@ -152,10 +152,15 @@
       });
     });
 
-    $('.delete-btn').on('click', function() {
-      const id = $(this).data('id');
-      const password = prompt('Enter password to delete this URL:');
-      if (password !== null) {
+    // Handle password modal
+    $('#passwordForm').on('submit', function(event) {
+      event.preventDefault();
+      const password = $('#modalPassword').val();
+      const shortURL = $('#passwordModal').data('short-url');
+      const action = $('#passwordModal').data('action');
+      const id = $('#passwordModal').data('id');
+
+      if (action === 'delete') {
         $.ajax({
           type: 'DELETE',
           url: '/shortURLs/' + id,
@@ -164,35 +169,48 @@
             location.reload();
           },
           error: function(xhr) {
-            alert(xhr.responseText);
+            $('#passwordError').text(xhr.responseText).removeClass('d-none');
+          }
+        });
+      } else {
+        $.ajax({
+          type: 'GET',
+          url: '/' + shortURL,
+          data: { password: password },
+          success: function() {
+            window.location.href = '/' + shortURL + '?password=' + password;
+          },
+          error: function(xhr) {
+            $('#passwordError').text(xhr.responseText).removeClass('d-none');
           }
         });
       }
-    });
-
-    // Handle password modal
-    $('#passwordForm').on('submit', function(event) {
-      event.preventDefault();
-      const password = $('#modalPassword').val();
-      const shortURL = $('#passwordModal').data('short-url');
-      $.ajax({
-        type: 'GET',
-        url: '/' + shortURL,
-        data: { password: password },
-        success: function() {
-          window.location.href = '/' + shortURL + '?password=' + password;
-        },
-        error: function(xhr) {
-          $('#passwordError').text(xhr.responseText).removeClass('d-none');
-        }
-      });
     });
 
     // Show password modal if needed
     $(document).off('click', '.short-url-link').on('click', '.short-url-link', function(event) {
       event.preventDefault();
       const shortURL = $(this).data('short-url');
-      $('#passwordModal').data('short-url', shortURL).modal('show');
+      $('#passwordModal').data('short-url', shortURL).data('action', 'access').modal('show');
+    });
+
+    $('.delete-btn').on('click', function() {
+      const id = $(this).data('id');
+      const password = $(this).data('password');
+      if (password) {
+        $('#passwordModal').data('id', id).data('action', 'delete').modal('show');
+      } else {
+        $.ajax({
+          type: 'DELETE',
+          url: '/shortURLs/' + id,
+          success: function() {
+            location.reload();
+          },
+          error: function(xhr) {
+            alert(xhr.responseText);
+          }
+        });
+      }
     });
   </script>
 </body>
