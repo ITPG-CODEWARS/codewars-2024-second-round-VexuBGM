@@ -9,7 +9,8 @@ const shortURLSchema = new mongoose.Schema({
   short: {
     type: String,
     required: true,
-    default: shortId.generate
+    default: shortId.generate,
+    unique: true // Ensure short URLs are unique
   },
   clicks: {
     type: Number,

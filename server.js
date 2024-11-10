@@ -1,5 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const shortId = require('shortid');
 const ShortURL = require('./models/shortURL');
 const app = express();
 
@@ -21,8 +22,22 @@ app.get('/', async (req, res) => {
 });
 
 app.post('/shortURLs', async (req, res) => {
-  await ShortURL.create({ full: req.body.fullURL });
-  res.redirect('/');
+  let shortURL;
+  if (req.body.customShortURL) {
+    shortURL = req.body.customShortURL;
+    if (shortURL.length < 5 || shortURL.length > 10) {
+      return res.status(400).send('Custom short URL must be between 5 and 10 characters');
+    }
+    const existingURL = await ShortURL.findOne({ short: shortURL });
+    if (existingURL) {
+      return res.status(400).send('Custom short URL already exists');
+    }
+  } else {
+    shortURL = shortId.generate();
+  }
+
+  await ShortURL.create({ full: req.body.fullURL, short: shortURL });
+  res.sendStatus(200);
 });
 
 app.get('/:shortURL', async (req, res) => {
