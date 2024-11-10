@@ -24,6 +24,10 @@ const shortURLSchema = new mongoose.Schema({
   maxUses: {
     type: Number,
     default: null // Optional maximum uses
+  },
+  password: {
+    type: String,
+    default: null // Optional password
   }
 });
 

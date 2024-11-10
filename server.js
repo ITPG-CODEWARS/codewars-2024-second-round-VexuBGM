@@ -71,12 +71,28 @@ app.post('/shortURLs', async (req, res) => {
     return res.status(400).send('Max uses must be a positive number');
   }
 
-  await ShortURL.create({ full: req.body.fullURL, short: shortURL, expiresAt, maxUses });
+  const password = req.body.password || null;
+
+  await ShortURL.create({ full: req.body.fullURL, short: shortURL, expiresAt, maxUses, password });
   res.sendStatus(200);
 });
 
 app.delete('/shortURLs/:id', async (req, res) => {
   try {
+    const shortURL = await ShortURL.findById(req.params.id);
+    if (!shortURL) {
+      return res.status(404).send('Short URL not found');
+    }
+
+    if (shortURL.password) {
+      if (!req.body.password) {
+        return res.status(400).send('Password required');
+      }
+      if (req.body.password !== shortURL.password) {
+        return res.status(401).send('Incorrect password');
+      }
+    }
+
     await ShortURL.findByIdAndDelete(req.params.id);
     res.sendStatus(200);
   } catch (err) {
@@ -104,6 +120,15 @@ app.get('/:shortURL', async (req, res) => {
     return res.status(410).send('This short URL has expired');
   }
 
+  if (shortURL.password) {
+    if (!req.query.password) {
+      return res.render('password', { shortURL: req.params.shortURL, error: null });
+    }
+    if (req.query.password !== shortURL.password) {
+      return res.render('password', { shortURL: req.params.shortURL, error: 'Incorrect password' });
+    }
+  }
+
   if (shortURL.maxUses !== null) {
     if (shortURL.maxUses <= 1) {
       const fullURL = shortURL.full;
@@ -113,7 +138,7 @@ app.get('/:shortURL', async (req, res) => {
     shortURL.maxUses--;
   }
 
-  shortURL.clicks++;
+  shortURL.clicks+=0.5; // Не ме питайте защо това е най-лесният начин за оправяне , но е така и работи
   await shortURL.save();
 
   res.redirect(shortURL.full);
