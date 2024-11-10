@@ -107,7 +107,10 @@
             <td><img src="<%= shortURL.qrCodeURL %>" alt="QR Code" class="qr-code"></td>
             <td><a href="<%= shortURL.qrCodeURL %>" download="qrcode.png" class="btn btn-primary">Download QR Code</a></td>
             <td><%= shortURL.expiresAt ? shortURL.expiresAt.toDateString() : 'No Expiration' %></td>
-            <td><button class="btn btn-danger delete-btn" data-id="<%= shortURL._id %>" data-password="<%= shortURL.password %>">Delete</button></td>
+            <td>
+              <button class="btn btn-info preview-btn" data-short-url="<%= shortURL.short %>" data-password-required="<%= !!shortURL.password %>">Preview</button>
+              <button class="btn btn-danger delete-btn" data-id="<%= shortURL._id %>" data-password="<%= shortURL.password %>">Delete</button>
+            </td>
           </tr>
         <% }) %>
       </tbody>
@@ -211,6 +214,29 @@
           }
         });
       }
+    });
+
+    // Handle preview button click
+    $(document).on('click', '.preview-btn', function() {
+      const shortURL = $(this).data('short-url');
+      const passwordRequired = $(this).data('password-required');
+
+      let password = '';
+      if (passwordRequired) {
+        password = prompt('Enter password:');
+      }
+
+      $.ajax({
+        type: 'GET',
+        url: '/preview/' + shortURL,
+        data: { password: password },
+        success: function(response) {
+          alert('Full URL: ' + response.fullURL);
+        },
+        error: function(xhr) {
+          alert(xhr.responseText);
+        }
+      });
     });
   </script>
 </body>
