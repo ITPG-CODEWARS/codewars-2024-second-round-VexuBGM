@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const shortId = require('shortid');
 const ShortURL = require('./models/shortURL');
+const QRCode = require('qrcode');
 const app = express();
 
 mongoose.connect('mongodb://localhost/urlShortener', {
@@ -18,7 +19,12 @@ app.use(express.urlencoded({ extended: false }));
 
 app.get('/', async (req, res) => {
   const shortURLs = await ShortURL.find();
-  res.render('index', { shortURLs: shortURLs });
+  const shortURLsWithQR = await Promise.all(shortURLs.map(async (shortURL) => {
+    const url = `${req.protocol}://${req.get('host')}/${shortURL.short}`;
+    const qrCodeURL = await QRCode.toDataURL(url);
+    return { ...shortURL.toObject(), qrCodeURL };
+  }));
+  res.render('index', { shortURLs: shortURLsWithQR });
 });
 
 app.post('/shortURLs', async (req, res) => {
@@ -59,6 +65,17 @@ app.delete('/shortURLs/:id', async (req, res) => {
   } catch (err) {
     res.status(500).send('Error deleting short URL');
   }
+});
+
+app.get('/qrcode/:shortURL', async (req, res) => {
+  const shortURL = await ShortURL.findOne({ short: req.params.shortURL });
+  if (shortURL == null) return res.sendStatus(404);
+
+  const url = `${req.protocol}://${req.get('host')}/${shortURL.short}`;
+  QRCode.toDataURL(url, (err, src) => {
+    if (err) res.status(500).send('Error generating QR code');
+    res.render('qrcode', { src });
+  });
 });
 
 app.get('/:shortURL', async (req, res) => {
