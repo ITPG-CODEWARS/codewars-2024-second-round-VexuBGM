@@ -38,6 +38,9 @@ app.post('/shortURLs', async (req, res) => {
       return res.status(400).send('Custom short URL already exists');
     }
   } else {
+    if (!req.body.urlLength) {
+      return res.status(400).send('URL length is required if no custom short URL is provided');
+    }
     const urlLength = parseInt(req.body.urlLength, 10);
     if (isNaN(urlLength) || urlLength < 5 || urlLength > 10) {
       return res.status(400).send('URL length must be between 5 and 10 characters');
@@ -47,6 +50,15 @@ app.post('/shortURLs', async (req, res) => {
 
   await ShortURL.create({ full: req.body.fullURL, short: shortURL });
   res.sendStatus(200);
+});
+
+app.delete('/shortURLs/:id', async (req, res) => {
+  try {
+    await ShortURL.findByIdAndDelete(req.params.id);
+    res.sendStatus(200);
+  } catch (err) {
+    res.status(500).send('Error deleting short URL');
+  }
 });
 
 app.get('/:shortURL', async (req, res) => {
