@@ -198,6 +198,29 @@
         });
       }
     });
+
+    // Handle preview button click
+    $(document).on('click', '.preview-btn', function() {
+      const shortURL = $(this).data('short-url');
+      const passwordRequired = $(this).data('password-required');
+
+      let password = '';
+      if (passwordRequired) {
+        password = prompt('Enter password:');
+      }
+
+      $.ajax({
+        type: 'GET',
+        url: '/preview/' + shortURL,
+        data: { password: password },
+        success: function(response) {
+          alert('Full URL: ' + response.fullURL);
+        },
+        error: function(xhr) {
+          alert(xhr.responseText);
+        }
+      });
+    });
   </script>
 </body>
 </html>

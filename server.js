@@ -111,6 +111,27 @@ app.get('/qrcode/:shortURL', async (req, res) => {
   });
 });
 
+app.get('/preview/:shortURL', async (req, res) => {
+  const shortURL = await ShortURL.findOne({ short: req.params.shortURL });
+  if (shortURL == null) return res.sendStatus(404);
+
+  if (shortURL.expiresAt && shortURL.expiresAt < new Date()) {
+    await ShortURL.findByIdAndDelete(shortURL._id);
+    return res.status(410).send('This short URL has expired');
+  }
+
+  if (shortURL.password) {
+    if (!req.query.password) {
+      return res.status(401).send('Password required');
+    }
+    if (req.query.password !== shortURL.password) {
+      return res.status(401).send('Incorrect password');
+    }
+  }
+
+  res.json({ fullURL: shortURL.full });
+});
+
 app.get('/:shortURL', async (req, res) => {
   const shortURL = await ShortURL.findOne({ short: req.params.shortURL });
   if (!shortURL) return res.sendStatus(404);
