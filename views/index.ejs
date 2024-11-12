@@ -93,7 +93,7 @@
             <td class="truncate"><a href="<%= shortURL.full %>" target="_blank"><%= shortURL.full %></a></td>
             <td>
               <% if (shortURL.password) { %>
-                <a href="#" class="short-url-link" data-short-url="<%= shortURL.short %>"><%= shortURL.short %></a>
+                <a href="/<%= shortURL.short %>"><%= shortURL.short %></a>
               <% } else { %>
                 <a href="/<%= shortURL.short %>" target="_blank"><%= shortURL.short %></a>
               <% } %>
@@ -107,34 +107,18 @@
             <td><img src="<%= shortURL.qrCodeURL %>" alt="QR Code" class="qr-code"></td>
             <td><a href="<%= shortURL.qrCodeURL %>" download="qrcode.png" class="btn btn-primary">Download QR Code</a></td>
             <td><%= shortURL.expiresAt ? shortURL.expiresAt.toDateString() : 'No Expiration' %></td>
-            <td><button class="btn btn-danger delete-btn" data-id="<%= shortURL._id %>" data-password="<%= shortURL.password %>">Delete</button></td>
+            <td>
+              <button class="btn btn-danger delete-btn" data-id="<%= shortURL._id %>" data-password="<%= shortURL.password %>">
+                Delete
+              </button>
+            </td>
           </tr>
         <% }) %>
       </tbody>
     </table>
   </div>
 
-  <!-- Password Modal -->
-  <div class="modal fade" id="passwordModal" tabindex="-1" aria-labelledby="passwordModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="passwordModalLabel">Enter Password</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <form id="passwordForm">
-            <div class="mb-3">
-              <label for="modalPassword" class="form-label">Password</label>
-              <input type="password" class="form-control" id="modalPassword" required>
-            </div>
-            <button type="submit" class="btn btn-primary">Submit</button>
-          </form>
-          <div id="passwordError" class="alert alert-danger d-none mt-3"></div>
-        </div>
-      </div>
-    </div>
-  </div>
+  
 
   <script>
     $('#shortenForm').on('submit', function(event) {
@@ -198,16 +182,18 @@
       const id = $(this).data('id');
       const password = $(this).data('password');
       if (password) {
-        $('#passwordModal').data('id', id).data('action', 'delete').modal('show');
+        // Redirect to the password page with 'delete' action
+        window.location.href = `/delete/${id}`;
       } else {
+        // Send DELETE request for URLs without a password
         $.ajax({
-          type: 'DELETE',
           url: '/shortURLs/' + id,
-          success: function() {
+          type: 'DELETE',
+          success: function(result) {
             location.reload();
           },
-          error: function(xhr) {
-            alert(xhr.responseText);
+          error: function(err) {
+            console.error(err);
           }
         });
       }

@@ -113,40 +113,95 @@ app.get('/qrcode/:shortURL', async (req, res) => {
 
 app.get('/:shortURL', async (req, res) => {
   const shortURL = await ShortURL.findOne({ short: req.params.shortURL });
-  if (shortURL == null) return res.sendStatus(404);
-
-  if (shortURL.expiresAt && shortURL.expiresAt < new Date()) {
-    await ShortURL.findByIdAndDelete(shortURL._id);
-    return res.status(410).send('This short URL has expired');
-  }
+  if (!shortURL) return res.sendStatus(404);
 
   if (shortURL.password) {
-    if (!req.query.password) {
-      return res.render('password', { shortURL: req.params.shortURL, error: null });
-    }
-    if (req.query.password !== shortURL.password) {
-      return res.render('password', { shortURL: req.params.shortURL, error: 'Incorrect password' });
-    }
-  }
-
-  if (shortURL.maxUses !== null) {
-    if (shortURL.maxUses <= 1) {
-      const fullURL = shortURL.full;
+    res.render('password', { 
+      id: shortURL._id,
+      action: 'access',
+      error: null
+    });
+  } else {
+    // Check if the URL has expired
+    if (shortURL.expiresAt && shortURL.expiresAt < new Date()) {
       await ShortURL.findByIdAndDelete(shortURL._id);
-      return res.redirect(fullURL);
+      return res.status(410).send('This short URL has expired');
     }
-    shortURL.maxUses--;
+
+    // Handle maxUses if set
+    if (shortURL.maxUses !== null) {
+      if (shortURL.maxUses <= 1) {
+        const fullURL = shortURL.full;
+        await ShortURL.findByIdAndDelete(shortURL._id);
+        return res.redirect(fullURL);
+      }
+      shortURL.maxUses--;
+    }
+
+    // Increment clicks and save
+    shortURL.clicks++;
+    await shortURL.save();
+
+    // Redirect to the full URL
+    res.redirect(shortURL.full);
   }
+});
+
+app.get('/delete/:id', async (req, res) => {
+  const shortURL = await ShortURL.findById(req.params.id);
+  if (!shortURL) return res.sendStatus(404);
 
   if (shortURL.password) {
-    shortURL.clicks+=0.5; // Не ме питайте защо това е най-лесният начин за оправяне, но е така и работи
+    res.render('password', { 
+      id: shortURL._id,
+      action: 'delete',
+      error: null
+    });
+  } else {
+    await ShortURL.findByIdAndDelete(shortURL._id);
+    res.redirect('/');
   }
-  else {
-    shortURL.clicks++;
-  }
-  await shortURL.save();
+});
 
-  res.redirect(shortURL.full);
+app.post('/password', async (req, res) => {
+  const { id, action, password } = req.body;
+  const shortURL = await ShortURL.findById(id);
+  if (!shortURL) return res.sendStatus(404);
+
+  if (shortURL.password && shortURL.password !== password) {
+    return res.render('password', {
+      id: shortURL._id,
+      action,
+      error: 'Incorrect password'
+    });
+  }
+
+  if (action === 'access') {
+    if (shortURL.expiresAt && shortURL.expiresAt < new Date()) {
+      await ShortURL.findByIdAndDelete(shortURL._id);
+      return res.status(410).send('This short URL has expired');
+    }
+
+    if (shortURL.maxUses !== null) {
+      if (shortURL.maxUses <= 1) {
+        const fullURL = shortURL.full;
+        await ShortURL.findByIdAndDelete(shortURL._id);
+        return res.redirect(fullURL);
+      }
+      shortURL.maxUses--;
+    }
+
+    shortURL.clicks++;
+    await shortURL.save();
+
+    res.redirect(shortURL.full);
+  } else if (action === 'delete') {
+    // Delete the short URL
+    await ShortURL.findByIdAndDelete(id);
+    res.redirect('/');
+  } else {
+    res.status(400).send('Invalid action');
+  }
 });
 
 // Schedule task to run every day at midnight
